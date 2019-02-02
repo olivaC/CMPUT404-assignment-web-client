@@ -40,9 +40,6 @@ class HTTPClient(object):
         self.socket = None
 
     def get_host_port(self, url):
-        host = None
-        port = None
-
         # Taken from https://docs.python.org/3/library/urllib.parse.html#urllib.parse.urlparse on January 31, 2019
         o = urlparse(url)
 
@@ -58,7 +55,10 @@ class HTTPClient(object):
     def get_path(self, url):
         # Taken from https://docs.python.org/3/library/urllib.parse.html#urllib.parse.urlparse on January 31, 2019
         o = urlparse(url)
-        return o.path
+        if not o.path:
+            return "/"
+        else:
+            return o.path
 
     def connect(self, host, port):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -108,22 +108,23 @@ class HTTPClient(object):
         # Add Http method
         req = '{} {} HTTP/1.1{}'.format(http_method, path, carriage_newline)
 
-        # Add User Agent
-        req += 'User-Agent: CMPUT404-assignment-web-client{}'.format(carriage_newline)
-
         # Add Host header
         req += 'Host: {}{}'.format(host, carriage_newline)
+
+        # Add User Agent
+        # Taken from https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/User-Agent on Feb 2, 2018
+        req += 'User-Agent: Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:47.0) Gecko/20100101 Firefox/47.0{}'.format(
+            carriage_newline)
 
         # Add Accept header
         # Taken from https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html
         req += 'Accept: text/*, text/html, text/html;level=1, */*{}'.format(carriage_newline)
 
-        req += 'Connection: close{}'.format(carriage_newline)
+        req += 'Content-Type: application/x-www-form-urlencoded{}'.format(carriage_newline)
 
         # Add Content Type if POST
         # Taken from https://code.tutsplus.com/tutorials/http-headers-for-dummies--net-8039
         if http_method == 'POST':
-            req += 'Content-Type: application/x-www-form-urlencoded{}'.format(carriage_newline)
             # Add Content Length and data
             if args:
                 req += 'Content-Length: {}{}'.format(len(urlencode(args)), carriage_newline)
@@ -133,6 +134,9 @@ class HTTPClient(object):
             else:
                 req += 'Content-Length: 0{}'.format(carriage_newline)
                 req += carriage_newline * 2
+
+        else:
+            req += carriage_newline
 
         return req
 
